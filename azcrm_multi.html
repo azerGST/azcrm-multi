@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AzCRM — Çoxsahəli</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:#f0f2f7;color:#1a1a2e;min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:240px;background:#0f1120;display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo h2{font-size:17px;font-weight:800;color:#fff;letter-spacing:.3px}
+.logo p{font-size:11px;color:rgba(255,255,255,.35);margin-top:3px}
+.dept-switcher{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.dept-switcher label{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:7px}
+.dept-select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff;font-size:13px;font-family:inherit;cursor:pointer;outline:none}
+.dept-select option{background:#1a1a2e;color:#fff}
+.nav{padding:10px 0;flex:1;overflow-y:auto}
+.nav-section{padding:14px 16px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.8px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 18px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.5);border-left:3px solid transparent;transition:all .14s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:rgba(55,138,221,.18);color:#fff;border-left-color:#378ADD;font-weight:600}
+.nav-badge{margin-left:auto;background:rgba(55,138,221,.35);color:#7ab8f0;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700}
+.sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.07)}
+.conn-row{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,.3);margin-bottom:3px}
+.dot{width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0}
+.dot.ok{background:#1D9E75}.dot.err{background:#e24b4a}.dot.loading{background:#f59e0b}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:0 26px;background:#fff;border-bottom:1px solid #e2e6ef;display:flex;align-items:center;justify-content:space-between;height:56px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar h1{font-size:16px;font-weight:700;color:#1a1a2e}
+.dept-tag{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.search{padding:8px 14px;border:1px solid #dde2ec;border-radius:8px;font-size:13px;width:200px;outline:none;background:#f7f8fc;font-family:inherit}
+.search:focus{border-color:#378ADD;background:#fff}
+.btn{padding:7px 14px;border-radius:8px;border:1px solid #dde2ec;background:#fff;color:#1a1a2e;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .12s;white-space:nowrap}
+.btn:hover{background:#f4f5f7}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:#378ADD;border-color:#185FA5;color:#fff}
+.btn-primary:hover{background:#2470c0}
+.btn-success{background:#1D9E75;border-color:#0F6E56;color:#fff}
+.btn-success:hover{background:#158a63}
+.btn-danger{border-color:#e24b4a;color:#e24b4a;background:#fff}
+.btn-danger:hover{background:#fef2f2}
+.btn-sm{padding:5px 11px;font-size:11px}
+
+/* Content */
+.content{flex:1;overflow-y:auto;padding:22px 26px}
+.page{display:none}.page.active{display:block}
+
+/* Metrics */
+.metrics{display:grid;gap:14px;margin-bottom:22px}
+.metrics-4{grid-template-columns:repeat(4,1fr)}
+.metrics-5{grid-template-columns:repeat(5,1fr)}
+.metric{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8edf5;position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.metric.blue::before{background:#378ADD}
+.metric.green::before{background:#1D9E75}
+.metric.amber::before{background:#f59e0b}
+.metric.red::before{background:#e24b4a}
+.metric.purple::before{background:#7c3aed}
+.metric .lbl{font-size:11px;color:#8a94a6;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.metric .val{font-size:26px;font-weight:800;color:#1a1a2e;line-height:1}
+.metric .sub{font-size:11px;margin-top:5px;color:#8a94a6}
+
+/* Cards / Tables */
+.card{background:#fff;border-radius:12px;border:1px solid #e8edf5;overflow:hidden;margin-bottom:18px}
+.card-head{padding:13px 18px;border-bottom:1px solid #f0f3f8;display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-size:13px;font-weight:700;color:#1a1a2e}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:9px 16px;font-size:11px;font-weight:700;color:#8a94a6;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0f3f8;background:#fafbfd;white-space:nowrap}
+td{padding:11px 16px;font-size:13px;color:#1a1a2e;border-bottom:1px solid #f5f6fa;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8faff}
+.row-actions{opacity:0;transition:opacity .12s;white-space:nowrap}
+tr:hover .row-actions{opacity:1}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-green{background:#e6f7ef;color:#0d6e3f}
+.b-blue{background:#e6f0fb;color:#0c4a8c}
+.b-amber{background:#fef3e2;color:#7a3f00}
+.b-red{background:#fde8e8;color:#8b1f1f}
+.b-gray{background:#f1f3f6;color:#4a5568}
+.b-teal{background:#e0f5ee;color:#085041}
+.b-purple{background:#eeedfe;color:#4a3db0}
+.b-orange{background:#fff3e0;color:#8a4000}
+
+/* Avatar */
+.av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.av-b{background:#ddeeff;color:#185FA5}.av-t{background:#d0f0e6;color:#0F6E56}
+.av-c{background:#fde8df;color:#993C1D}.av-p{background:#eeedfe;color:#534AB7}.av-a{background:#faeeda;color:#854F0B}
+.flex-c{display:flex;align-items:center;gap:10px}
+.n-s .n{font-weight:600;font-size:13px;line-height:1.3}
+.n-s .s{font-size:11px;color:#8a94a6}
+
+/* Dashboard grid */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.dash-grid-3{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+
+/* Dept tabs on dashboard */
+.dept-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.dept-tab{padding:6px 14px;border-radius:8px;border:1px solid #e2e6ef;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#4a5568;transition:all .12s}
+.dept-tab:hover{border-color:#378ADD;color:#185FA5}
+.dept-tab.active{background:#378ADD;border-color:#185FA5;color:#fff}
+
+/* Quote builder */
+.q-items-wrap{border:1px solid #e8edf5;border-radius:10px;overflow:hidden;margin:8px 0 14px}
+.q-items-wrap table{margin:0}
+.q-items-wrap th{background:#f4f6fb}
+.q-total-row{text-align:right;padding:10px 16px;font-weight:700;font-size:14px;color:#185FA5;border-top:2px solid #e8edf5;background:#f8fafc}
+.add-item-row{display:flex;gap:8px;padding:10px;background:#f8fafc;border-top:1px solid #f0f3f8;flex-wrap:wrap}
+.add-item-row input,.add-item-row select{padding:7px 10px;border:1px solid #dde2ec;border-radius:7px;font-size:12px;font-family:inherit;min-width:0}
+
+/* Reports */
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.rep-card{background:#fff;border-radius:12px;border:1px solid #e8edf5;padding:20px}
+.rep-card h3{font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:16px}
+.bar-row{margin-bottom:11px}
+.bar-lbl{font-size:12px;color:#4a5568;margin-bottom:4px;display:flex;justify-content:space-between}
+.bar-track{background:#f0f3f8;border-radius:20px;height:9px;overflow:hidden}
+.bar-fill{height:100%;border-radius:20px;transition:width .5s ease}
+.nums-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.big-num{font-size:30px;font-weight:800;color:#1a1a2e;line-height:1;margin-bottom:3px}
+.big-sub{font-size:12px;color:#8a94a6}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(10,15,35,.5);z-index:2000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.22);padding:28px;width:440px;max-height:92vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:800;margin-bottom:20px;color:#1a1a2e}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:11px;font-weight:700;color:#8a94a6;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 12px;border:1px solid #dde2ec;border-radius:8px;font-size:13px;font-family:inherit;color:#1a1a2e;outline:none;transition:border .12s;background:#fff}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#378ADD;box-shadow:0 0 0 3px rgba(55,138,221,.1)}
+.fg textarea{height:75px;resize:vertical}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid #f0f3f8}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Print */
+@media print{
+  .sidebar,.topbar,.modal-bg,.no-print{display:none!important}
+  body,.app,.main,.content{display:block!important;height:auto!important;overflow:visible!important;padding:0!important}
+  .page{display:none!important}
+  #print-area{display:block!important}
+}
+#print-area{display:none}
+
+.empty{text-align:center;padding:36px;color:#b0b8c8;font-size:13px}
+.spinner{width:18px;height:18px;border:2px solid #e8edf5;border-top-color:#378ADD;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sync-btn{font-size:16px;padding:6px 10px;border-radius:8px;border:1px solid #e2e6ef;background:#fff;cursor:pointer;transition:transform .3s}
+.sync-btn.spinning{animation:spin .7s linear infinite}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="logo">
+    <h2>AzCRM Pro</h2>
+    <p>Çoxsahəli idarəetmə</p>
+  </div>
+
+  <div class="dept-switcher">
+    <label>Aktiv sahə</label>
+    <select class="dept-select" id="dept-select" onchange="changeDept(this.value)">
+      <option value="all">📊 Bütün sahələr</option>
+      <option value="0">🔵 Satış 1</option>
+      <option value="1">🟢 Satış 2</option>
+      <option value="2">🟠 Satış 3</option>
+      <option value="3">🟣 Satış 4</option>
+    </select>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Ümumi</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span>⬡</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('customers',this)"><span>◎</span>Müştərilər <span class="nav-badge" id="nb-customers">0</span></div>
+
+    <div class="nav-section">Sahə</div>
+    <div class="nav-item" onclick="showPage('products',this)"><span>◈</span>Məhsullar / Xidmətlər</div>
+    <div class="nav-item" onclick="showPage('orders',this)"><span>◫</span>Sifarişlər <span class="nav-badge" id="nb-orders">0</span></div>
+    <div class="nav-item" onclick="showPage('quotes',this)"><span>◧</span>Təkliflər <span class="nav-badge" id="nb-quotes">0</span></div>
+    <div class="nav-item" onclick="showPage('tasks',this)"><span>☑</span>Tapşırıqlar <span class="nav-badge" id="nb-tasks">0</span></div>
+
+    <div class="nav-section">Analitika</div>
+    <div class="nav-item" onclick="showPage('reports',this)"><span>◉</span>Hesabatlar</div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div id="conn-rows"></div>
+    <div style="margin-top:6px;font-size:10px;color:rgba(255,255,255,.2)">AzCRM Pro v3.0</div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="page-title">Dashboard</h1>
+      <span class="dept-tag b-blue" id="dept-tag">Bütün sahələr</span>
+    </div>
+    <div class="topbar-right">
+      <input class="search" type="text" placeholder="🔍 Axtar..." oninput="handleSearch(this.value)" id="search-inp">
+      <button class="sync-btn no-print" id="sync-btn" onclick="syncAll()" title="Sinxronlaşdır">↻</button>
+      <button class="btn btn-primary no-print" onclick="openAddModal()">+ Əlavə et</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="metrics metrics-5" id="dash-metrics"></div>
+      <div class="dept-tabs" id="dept-tabs">
+        <div class="dept-tab active" onclick="setDashTab('all',this)">📊 Hamısı</div>
+        <div class="dept-tab" onclick="setDashTab(0,this)">🔵 Satış 1</div>
+        <div class="dept-tab" onclick="setDashTab(1,this)">🟢 Satış 2</div>
+        <div class="dept-tab" onclick="setDashTab(2,this)">🟠 Satış 3</div>
+        <div class="dept-tab" onclick="setDashTab(3,this)">🟣 Satış 4</div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head"><h3>Son müştərilər</h3></div>
+          <div id="dash-cust"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3 id="dash-qt-title">Son təkliflər</h3></div>
+          <div id="dash-quotes"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Sahə müqayisəsi — sifarişlər</h3></div>
+        <div style="padding:18px" id="dash-compare"></div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div id="page-customers" class="page">
+      <div class="card">
+        <table>
+          <thead><tr><th>Müştəri</th><th>Telefon</th><th>Email</th><th>Status</th><th>Tarix</th><th></th></tr></thead>
+          <tbody id="cust-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div id="page-products" class="page">
+      <div class="card">
+        <div class="card-head">
+          <h3 id="prod-title">Məhsullar / Xidmətlər</h3>
+        </div>
+        <table>
+          <thead><tr><th>Ad</th><th>Sahə</th><th>Ölçü vahidi</th><th>Qiymət</th><th>Stok</th><th></th></tr></thead>
+          <tbody id="prod-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="page-orders" class="page">
+      <div class="card">
+        <table>
+          <thead><tr><th>№</th><th>Müştəri</th><th>Sahə</th><th>Tarix</th><th>Cəmi</th><th>Status</th><th>Qeyd</th><th></th></tr></thead>
+          <tbody id="ord-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QUOTES -->
+    <div id="page-quotes" class="page">
+      <div class="card">
+        <table>
+          <thead><tr><th>№</th><th>Müştəri</th><th>Sahə</th><th>Tarix</th><th>Cəmi</th><th>Status</th><th>Əməliyyat</th></tr></thead>
+          <tbody id="quot-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="page-tasks" class="page">
+      <div id="task-list"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="page-reports" class="page">
+      <div style="margin-bottom:16px">
+        <div class="dept-tabs" id="rep-dept-tabs">
+          <div class="dept-tab active" onclick="setRepTab('all',this)">📊 Hamısı</div>
+          <div class="dept-tab" onclick="setRepTab(0,this)">🔵 Satış 1</div>
+          <div class="dept-tab" onclick="setRepTab(1,this)">🟢 Satış 2</div>
+          <div class="dept-tab" onclick="setRepTab(2,this)">🟠 Satış 3</div>
+          <div class="dept-tab" onclick="setRepTab(3,this)">🟣 Satış 4</div>
+        </div>
+      </div>
+      <div class="rep-grid" id="rep-content"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal">
+    <h3 id="modal-title">Əlavə et</h3>
+    <div id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Ləğv et</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveModal()">Saxla</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIG — Hər sahə üçün Google Apps Script URL-i yazın
+// ══════════════════════════════════════════════════════════
+const DEPTS = [
+  { name:'Satış 1', emoji:'🔵', color:'#378ADD', tag:'b-blue',
+    apiUrl:'SATIS1_WEB_APP_URL' },
+  { name:'Satış 2', emoji:'🟢', color:'#1D9E75', tag:'b-green',
+    apiUrl:'SATIS2_WEB_APP_URL' },
+  { name:'Satış 3', emoji:'🟠', color:'#f59e0b', tag:'b-amber',
+    apiUrl:'SATIS3_WEB_APP_URL' },
+  { name:'Satış 4', emoji:'🟣', color:'#7c3aed', tag:'b-purple',
+    apiUrl:'SATIS4_WEB_APP_URL' },
+];
+
+const COMPANY = {
+  name:'Şirkətinizin Adı',
+  address:'Bakı, Azərbaycan',
+  phone:'+994 XX XXX XX XX',
+  email:'info@sirket.az'
+};
+
+// ══════════════════════════════════════════════════════════
+
+const STORAGE_KEY = 'azcrm_v3';
+
+// DB structure
+let DB = {
+  customers: [],      // ortaq
+  depts: DEPTS.map(()=>({ products:[], orders:[], quotes:[] })),
+  tasks: [],
+  nextId: { c:1, p:1, o:1, q:1, t:1 }
+};
+
+function localSave(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }catch(e){} }
+function localLoad(){ try{ const d=localStorage.getItem(STORAGE_KEY); if(d){ const p=JSON.parse(d); if(p.customers) DB=p; }}catch(e){} }
+
+// ── API ───────────────────────────────────────────────────
+async function apiGet(deptIdx, action){
+  const url = DEPTS[deptIdx].apiUrl;
+  if(!url||url.includes('_URL')) throw new Error('not_configured');
+  const r = await fetch(url+'?action='+action);
+  return r.json();
+}
+async function apiPost(deptIdx, data){
+  const url = DEPTS[deptIdx].apiUrl;
+  if(!url||url.includes('_URL')) throw new Error('not_configured');
+  const r = await fetch(url, {method:'POST', body:JSON.stringify(data)});
+  return r.json();
+}
+async function apiGetShared(action){
+  // Shared = first dept's sheet (customers are in Satış 1 sheet)
+  return apiGet(0, action);
+}
+
+// ── Sync ─────────────────────────────────────────────────
+const connStatus = [null,null,null,null]; // null=unknown, true=ok, false=err
+
+async function syncAll(){
+  const btn = document.getElementById('sync-btn');
+  btn.classList.add('spinning');
+
+  // Sync customers from dept 0
+  try {
+    const r = await apiGetShared('getCustomers');
+    if(Array.isArray(r)){ DB.customers=r; connStatus[0]=true; }
+  } catch(e){ connStatus[0]=false; }
+
+  // Sync each dept
+  for(let i=0;i<DEPTS.length;i++){
+    try {
+      const [prods, orders, quotes] = await Promise.all([
+        apiGet(i,'getProducts'),
+        apiGet(i,'getOrders'),
+        apiGet(i,'getQuotes')
+      ]);
+      if(Array.isArray(prods))  DB.depts[i].products = prods;
+      if(Array.isArray(orders)) DB.depts[i].orders   = orders;
+      if(Array.isArray(quotes)) DB.depts[i].quotes   = quotes;
+      connStatus[i]=true;
+    } catch(e){ connStatus[i]=false; }
+  }
+
+  localSave();
+  updateNavBadges();
+  renderConnStatus();
+  renderPage(currentPage);
+  btn.classList.remove('spinning');
+}
+
+function renderConnStatus(){
+  const rows = DEPTS.map((d,i)=>{
+    const s = connStatus[i];
+    const cls = s===true?'ok':s===false?'err':'';
+    const txt = s===true?'Bağlı':s===false?'Xəta':'—';
+    return`<div class="conn-row"><span class="dot ${cls}"></span><span>${d.emoji} ${d.name}: ${txt}</span></div>`;
+  }).join('');
+  document.getElementById('conn-rows').innerHTML=rows;
+}
+
+// ── State ─────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let currentDept = 'all'; // 'all' or 0..3
+let dashTab = 'all';
+let repTab = 'all';
+let searchVal = '';
+let modalMode = '';
+let quoteItems = [];
+
+const deptMetricColors = ['blue','green','amber','purple'];
+
+function changeDept(v){
+  currentDept = v==='all'?'all':parseInt(v);
+  updateDeptTag();
+  renderPage(currentPage);
+}
+
+function updateDeptTag(){
+  const el = document.getElementById('dept-tag');
+  if(currentDept==='all'){
+    el.textContent='Bütün sahələr'; el.className='dept-tag b-gray';
+  } else {
+    const d=DEPTS[currentDept];
+    el.textContent=d.emoji+' '+d.name; el.className='dept-tag '+d.tag;
+  }
+}
+
+function updateNavBadges(){
+  const custs = DB.customers.length;
+  const orders = currentDept==='all'
+    ? DB.depts.reduce((s,d)=>s+d.orders.length,0)
+    : (DB.depts[currentDept]?.orders.length||0);
+  const quotes = currentDept==='all'
+    ? DB.depts.reduce((s,d)=>s+d.quotes.length,0)
+    : (DB.depts[currentDept]?.quotes.length||0);
+  const tasks = DB.tasks.filter(t=>!t.done).length;
+  document.getElementById('nb-customers').textContent=custs;
+  document.getElementById('nb-orders').textContent=orders;
+  document.getElementById('nb-quotes').textContent=quotes;
+  document.getElementById('nb-tasks').textContent=tasks;
+}
+
+// ── Utils ─────────────────────────────────────────────────
+const avCls=['av-b','av-t','av-c','av-p','av-a'];
+function avCl(n){ return avCls[(n.charCodeAt(0)||0)%avCls.length]; }
+function ini(n){ return (n||'?').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function fmtDate(d){ return d?new Date(d).toLocaleDateString('az-AZ',{day:'2-digit',month:'2-digit',year:'numeric'}):'-'; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function uid(){ return Date.now()+Math.floor(Math.random()*1000); }
+function fmtM(v){ return '₼'+(parseFloat(v)||0).toLocaleString('az-AZ',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+const SB = {
+  aktiv:'b-green', potensial:'b-blue', 'qeyri-aktiv':'b-gray',
+  'göndərildi':'b-blue','qəbul edildi':'b-green','rədd edildi':'b-red','gözləyir':'b-amber',
+  tamamlandı:'b-green', icrada:'b-teal', ləğv:'b-red', yeni:'b-purple'
+};
+
+function getDeptOrders(di){ return DB.depts[di]?.orders||[]; }
+function getDeptQuotes(di){ return DB.depts[di]?.quotes||[]; }
+function getDeptProducts(di){ return DB.depts[di]?.products||[]; }
+
+function getFilteredDepts(){ return currentDept==='all'?[0,1,2,3]:[currentDept]; }
+
+// ── Navigation ────────────────────────────────────────────
+function showPage(page, el){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el) el.classList.add('active');
+  const T={dashboard:'Dashboard',customers:'Müştərilər',products:'Məhsullar / Xidmətlər',
+    orders:'Sifarişlər',quotes:'Təkliflər',tasks:'Tapşırıqlar',reports:'Hesabatlar'};
+  document.getElementById('page-title').textContent=T[page]||'';
+  document.getElementById('search-inp').value=''; searchVal='';
+  renderPage(page);
+}
+function handleSearch(v){ searchVal=v; renderPage(currentPage); }
+function renderPage(p){
+  updateNavBadges();
+  if(p==='dashboard') renderDashboard();
+  else if(p==='customers') renderCustomers();
+  else if(p==='products') renderProducts();
+  else if(p==='orders') renderOrders();
+  else if(p==='quotes') renderQuotes();
+  else if(p==='tasks') renderTasks();
+  else if(p==='reports') renderReports();
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+function setDashTab(v,el){
+  dashTab=v;
+  document.querySelectorAll('#dept-tabs .dept-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const depts = dashTab==='all'?[0,1,2,3]:[dashTab];
+  const allOrders = depts.flatMap(i=>getDeptOrders(i));
+  const allQuotes = depts.flatMap(i=>getDeptQuotes(i));
+  const rev = allOrders.filter(o=>o['Status']==='tamamlandı').reduce((s,o)=>s+(parseFloat(o['Cəmi'])||0),0);
+
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric blue"><div class="lbl">Müştərilər</div><div class="val">${DB.customers.length}</div><div class="sub">ümumi baza</div></div>
+    <div class="metric green"><div class="lbl">Sifarişlər</div><div class="val">${allOrders.length}</div><div class="sub">${depts.length===1?DEPTS[depts[0]].name:'bütün sahələr'}</div></div>
+    <div class="metric amber"><div class="lbl">Açıq təkliflər</div><div class="val">${allQuotes.filter(q=>q['Status']==='göndərildi').length}</div><div class="sub">cavab gözləyir</div></div>
+    <div class="metric purple"><div class="lbl">Tapşırıqlar</div><div class="val">${DB.tasks.filter(t=>!t.done).length}</div><div class="sub">tamamlanmamış</div></div>
+    <div class="metric red"><div class="lbl">Gəlir</div><div class="val">₼${Math.round(rev).toLocaleString()}</div><div class="sub">tamamlanan sifariş</div></div>`;
+
+  // Recent customers
+  const custs=[...DB.customers].slice(-6).reverse();
+  document.getElementById('dash-cust').innerHTML = custs.length
+    ?`<table><tbody>${custs.map(c=>`<tr>
+        <td><div class="flex-c"><div class="av ${avCl(c['Ad Soyad']||'A')}">${ini(c['Ad Soyad'])}</div>
+        <div class="n-s"><div class="n">${c['Ad Soyad']}</div><div class="s">${c['Şirkət']||''}</div></div></div></td>
+        <td><span class="badge ${SB[c['Status']]||'b-gray'}">${c['Status']||''}</span></td>
+        </tr>`).join('')}</tbody></table>`
+    :'<div class="empty">Müştəri yoxdur</div>';
+
+  // Recent quotes
+  const recentQ=[...allQuotes].slice(-6).reverse();
+  document.getElementById('dash-quotes').innerHTML = recentQ.length
+    ?`<table><tbody>${recentQ.map(q=>`<tr>
+        <td><div class="n">${q['Müştəri Adı']||''}</div></td>
+        <td>${fmtM(q['Cəmi'])}</td>
+        <td><span class="badge ${SB[q['Status']]||'b-gray'}">${q['Status']||''}</span></td>
+        </tr>`).join('')}</tbody></table>`
+    :'<div class="empty">Təklif yoxdur</div>';
+
+  // Compare bars
+  const maxOrd = Math.max(1,...[0,1,2,3].map(i=>getDeptOrders(i).length));
+  document.getElementById('dash-compare').innerHTML=[0,1,2,3].map(i=>{
+    const d=DEPTS[i]; const cnt=getDeptOrders(i).length;
+    const pct=Math.round(cnt/maxOrd*100);
+    const rev2=getDeptOrders(i).filter(o=>o['Status']==='tamamlandı').reduce((s,o)=>s+(parseFloat(o['Cəmi'])||0),0);
+    return`<div class="bar-row">
+      <div class="bar-lbl"><span>${d.emoji} ${d.name}</span><span>${cnt} sifariş · ${fmtM(rev2)}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${d.color}"></div></div>
+    </div>`;}).join('');
+}
+
+// ── Customers ─────────────────────────────────────────────
+function renderCustomers(){
+  const q=searchVal.toLowerCase();
+  const list=DB.customers.filter(c=>!q||(c['Ad Soyad']||'').toLowerCase().includes(q)||(c['Şirkət']||'').toLowerCase().includes(q));
+  document.getElementById('cust-body').innerHTML=list.length
+    ?list.map(c=>`<tr>
+      <td><div class="flex-c"><div class="av ${avCl(c['Ad Soyad']||'A')}">${ini(c['Ad Soyad'])}</div>
+      <div class="n-s"><div class="n">${c['Ad Soyad']}</div><div class="s">${c['Şirkət']||''}</div></div></div></td>
+      <td>${c['Telefon']||'-'}</td><td>${c['Email']||'-'}</td>
+      <td><span class="badge ${SB[c['Status']]||'b-gray'}">${c['Status']||''}</span></td>
+      <td>${fmtDate(c['Tarix'])}</td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteCustomer(${c['ID']})">Sil</button></td>
+    </tr>`).join('')
+    :`<tr><td colspan="6" class="empty">Müştəri tapılmadı</td></tr>`;
+}
+
+// ── Products ──────────────────────────────────────────────
+function renderProducts(){
+  const depts=getFilteredDepts();
+  const q=searchVal.toLowerCase();
+  const rows=depts.flatMap(di=>getDeptProducts(di).filter(p=>!q||(p['Ad']||'').toLowerCase().includes(q)).map(p=>({...p,_di:di})));
+  document.getElementById('prod-body').innerHTML=rows.length
+    ?rows.map(p=>{const d=DEPTS[p._di];return`<tr>
+      <td><strong>${p['Ad']}</strong></td>
+      <td><span class="badge ${d.tag}">${d.emoji} ${d.name}</span></td>
+      <td>${p['Ölçü vahidi']||'-'}</td>
+      <td>${fmtM(p['Qiymət'])}</td>
+      <td>${p['Stok']||0}</td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteDeptItem(${p._di},'products','Məhsullar',${p['ID']})">Sil</button></td>
+    </tr>`}).join('')
+    :`<tr><td colspan="6" class="empty">Məhsul yoxdur</td></tr>`;
+}
+
+// ── Orders ────────────────────────────────────────────────
+function renderOrders(){
+  const depts=getFilteredDepts();
+  const rows=depts.flatMap(di=>getDeptOrders(di).map(o=>({...o,_di:di})));
+  document.getElementById('ord-body').innerHTML=rows.length
+    ?rows.map(o=>{const d=DEPTS[o._di];return`<tr>
+      <td>#${o['ID']}</td>
+      <td>${o['Müştəri Adı']||''}</td>
+      <td><span class="badge ${d.tag}">${d.emoji} ${d.name}</span></td>
+      <td>${fmtDate(o['Tarix'])}</td>
+      <td>${fmtM(o['Cəmi'])}</td>
+      <td><span class="badge ${SB[o['Status']]||'b-gray'}">${o['Status']||''}</span></td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o['Qeyd']||''}</td>
+      <td class="row-actions"><button class="btn btn-sm btn-danger" onclick="deleteDeptItem(${o._di},'orders','Sifarişlər',${o['ID']})">Sil</button></td>
+    </tr>`}).join('')
+    :`<tr><td colspan="8" class="empty">Sifariş yoxdur</td></tr>`;
+}
+
+// ── Quotes ────────────────────────────────────────────────
+function renderQuotes(){
+  const depts=getFilteredDepts();
+  const rows=depts.flatMap(di=>getDeptQuotes(di).map(q=>({...q,_di:di})));
+  document.getElementById('quot-body').innerHTML=rows.length
+    ?rows.map(q=>{const d=DEPTS[q._di];return`<tr>
+      <td>#${q['ID']}</td>
+      <td>${q['Müştəri Adı']||''}</td>
+      <td><span class="badge ${d.tag}">${d.emoji} ${d.name}</span></td>
+      <td>${fmtDate(q['Tarix'])}</td>
+      <td>${fmtM(q['Cəmi'])}</td>
+      <td><span class="badge ${SB[q['Status']]||'b-gray'}">${q['Status']||''}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="printQuote(${q._di},${q['ID']})">🖨</button>
+        <button class="btn btn-sm btn-success" style="margin-left:4px" onclick="emailQuote(${q._di},${q['ID']})">✉</button>
+        <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="deleteDeptItem(${q._di},'quotes','Təkliflər',${q['ID']})">Sil</button>
+      </td>
+    </tr>`}).join('')
+    :`<tr><td colspan="7" class="empty">Təklif yoxdur</td></tr>`;
+}
+
+// ── Tasks ─────────────────────────────────────────────────
+function renderTasks(){
+  const sorted=[...DB.tasks].sort((a,b)=>a.done-b.done);
+  document.getElementById('task-list').innerHTML=sorted.length
+    ?sorted.map(t=>`<div class="task-item">
+      <div class="chk ${t.done?'done':''}" onclick="toggleTask(${t.id})" style="width:20px;height:20px;border-radius:5px;border:2px solid ${t.done?'#378ADD':'#cdd4e0'};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;flex-shrink:0;background:${t.done?'#378ADD':'transparent'};color:${t.done?'#fff':'transparent'}">${t.done?'✓':'✓'}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;${t.done?'text-decoration:line-through;color:#aab0be':''}">${t.text}</div>
+        <div style="display:flex;gap:8px;margin-top:3px">
+          <span class="badge ${SB[t.priority]||'b-gray'}" style="font-size:10px">${t.priority}</span>
+          <span style="font-size:11px;color:#8a94a6">Son tarix: ${fmtDate(t.due)}</span>
+          ${t.dept!==undefined?`<span class="badge ${DEPTS[t.dept]?.tag||'b-gray'}" style="font-size:10px">${DEPTS[t.dept]?.emoji} ${DEPTS[t.dept]?.name}</span>`:''}
+        </div>
+      </div>
+      <button class="btn btn-sm btn-danger row-actions" onclick="deleteTask(${t.id})">Sil</button>
+    </div>`).join('')
+    :'<div class="empty" style="background:#fff;border-radius:12px;padding:40px">Tapşırıq yoxdur</div>';
+}
+
+// ── Reports ───────────────────────────────────────────────
+function setRepTab(v,el){
+  repTab=v;
+  document.querySelectorAll('#rep-dept-tabs .dept-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderReports();
+}
+
+function renderReports(){
+  const depts=repTab==='all'?[0,1,2,3]:[repTab];
+  const orders=depts.flatMap(i=>getDeptOrders(i));
+  const quotes=depts.flatMap(i=>getDeptQuotes(i));
+  const ordStatuses=['yeni','icrada','tamamlandı','ləğv'];
+  const quotStatuses=['göndərildi','qəbul edildi','rədd edildi','gözləyir'];
+  const colors=['#378ADD','#1D9E75','#f59e0b','#e24b4a'];
+
+  const rev=orders.filter(o=>o['Status']==='tamamlandı').reduce((s,o)=>s+(parseFloat(o['Cəmi'])||0),0);
+  const sent=quotes.filter(q=>['göndərildi','qəbul edildi','rədd edildi'].includes(q['Status'])).length;
+  const acc=quotes.filter(q=>q['Status']==='qəbul edildi').length;
+
+  document.getElementById('rep-content').innerHTML=`
+    <div class="rep-card">
+      <h3>Sifariş statusları</h3>
+      ${ordStatuses.map((s,i)=>{const cnt=orders.filter(o=>o['Status']===s).length;const pct=orders.length?Math.round(cnt/orders.length*100):0;
+        return`<div class="bar-row"><div class="bar-lbl"><span>${s}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i]}"></div></div></div>`;}).join('')}
+    </div>
+    <div class="rep-card">
+      <h3>Ümumi göstəricilər</h3>
+      <div class="nums-grid">
+        <div><div class="big-num">${orders.length}</div><div class="big-sub">Sifariş</div></div>
+        <div><div class="big-num">₼${Math.round(rev).toLocaleString()}</div><div class="big-sub">Gəlir</div></div>
+        <div><div class="big-num">${sent}</div><div class="big-sub">Göndərilən təklif</div></div>
+        <div><div class="big-num">${sent?Math.round(acc/sent*100):'0'}%</div><div class="big-sub">Qəbul faizi</div></div>
+      </div>
+    </div>
+    <div class="rep-card">
+      <h3>Təklif statusları</h3>
+      ${quotStatuses.map((s,i)=>{const cnt=quotes.filter(q=>q['Status']===s).length;const pct=quotes.length?Math.round(cnt/quotes.length*100):0;
+        return`<div class="bar-row"><div class="bar-lbl"><span>${s}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i]}"></div></div></div>`;}).join('')}
+    </div>
+    <div class="rep-card">
+      <h3>Sahə müqayisəsi</h3>
+      ${[0,1,2,3].map(i=>{
+        const d=DEPTS[i];const ords=getDeptOrders(i).length;
+        const r=getDeptOrders(i).filter(o=>o['Status']==='tamamlandı').reduce((s,o)=>s+(parseFloat(o['Cəmi'])||0),0);
+        const maxO=Math.max(1,...[0,1,2,3].map(j=>getDeptOrders(j).length));
+        return`<div class="bar-row"><div class="bar-lbl"><span>${d.emoji} ${d.name}</span><span>${ords} · ${fmtM(r)}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ords/maxO*100)}%;background:${d.color}"></div></div></div>`;}).join('')}
+    </div>`;
+}
+
+// ── Delete ────────────────────────────────────────────────
+function deleteCustomer(id){
+  if(!confirm('Bu müştərini silmək istəyirsiniz?')) return;
+  DB.customers=DB.customers.filter(c=>String(c['ID'])!==String(id));
+  localSave(); renderCustomers();
+  try{ apiPost(0,{action:'deleteRow',sheetName:'Müştərilər',id}); }catch(e){}
+}
+function deleteDeptItem(di,key,sheetName,id){
+  if(!confirm('Silmək istəyirsiniz?')) return;
+  DB.depts[di][key]=DB.depts[di][key].filter(x=>String(x['ID'])!==String(id));
+  localSave(); renderPage(currentPage);
+  try{ apiPost(di,{action:'deleteRow',sheetName,id}); }catch(e){}
+}
+function deleteTask(id){ DB.tasks=DB.tasks.filter(t=>t.id!==id); localSave(); renderTasks(); }
+function toggleTask(id){ const t=DB.tasks.find(t=>t.id===id); if(t){t.done=!t.done;localSave();renderTasks();} }
+
+// ── Modal ─────────────────────────────────────────────────
+function openAddModal(){
+  if(currentPage==='reports') return openModalFor('customers');
+  openModalFor(currentPage);
+}
+
+function openModalFor(type){
+  modalMode=type; quoteItems=[];
+  const custOpts=DB.customers.map(c=>`<option value="${c['ID']}">${c['Ad Soyad']}${c['Şirkət']?' — '+c['Şirkət']:''}</option>`).join('');
+  const deptOpts=DEPTS.map((d,i)=>`<option value="${i}">${d.emoji} ${d.name}</option>`).join('');
+  const defDept=currentDept==='all'?0:currentDept;
+
+  let title='', html='';
+
+  if(type==='customers'||type==='dashboard'){
+    title='Yeni müştəri'; modalMode='customers';
+    html=`<div class="grid2">
+      <div class="fg"><label>Ad Soyad *</label><input id="f-name" placeholder="Anar Həsənov"></div>
+      <div class="fg"><label>Şirkət</label><input id="f-company" placeholder="Texno MMC"></div>
+    </div>
+    <div class="grid2">
+      <div class="fg"><label>Telefon</label><input id="f-phone" placeholder="055-000-0000"></div>
+      <div class="fg"><label>Email</label><input id="f-email" type="email" placeholder="ad@sirket.az"></div>
+    </div>
+    <div class="fg"><label>Status</label><select id="f-status"><option>aktiv</option><option>potensial</option><option>qeyri-aktiv</option></select></div>`;
+  } else if(type==='products'){
+    title='Yeni məhsul / xidmət';
+    html=`<div class="fg"><label>Sahə *</label><select id="f-dept">${deptOpts}</select></div>
+    <div class="fg"><label>Ad *</label><input id="f-name" placeholder="Məhsul / Xidmət adı"></div>
+    <div class="grid2">
+      <div class="fg"><label>Ölçü vahidi</label><input id="f-unit" placeholder="ədəd, xidmət, kq..."></div>
+      <div class="fg"><label>Qiymət (₼)</label><input id="f-price" type="number" placeholder="0.00" step="0.01"></div>
+    </div>
+    <div class="fg"><label>Stok</label><input id="f-stock" type="number" placeholder="0"></div>`;
+  } else if(type==='orders'){
+    title='Yeni sifariş';
+    html=`<div class="fg"><label>Sahə *</label><select id="f-dept">${deptOpts}</select></div>
+    <div class="fg"><label>Müştəri *</label><select id="f-customer">${custOpts}</select></div>
+    <div class="grid2">
+      <div class="fg"><label>Cəmi (₼)</label><input id="f-total" type="number" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Status</label><select id="f-ostatus"><option>yeni</option><option>icrada</option><option>tamamlandı</option><option>ləğv</option></select></div>
+    </div>
+    <div class="fg"><label>Tarix</label><input id="f-date" type="date" value="${today()}"></div>
+    <div class="fg"><label>Qeyd</label><textarea id="f-note" placeholder="Əlavə məlumat..."></textarea></div>`;
+  } else if(type==='quotes'){
+    title='Yeni kommersiya təklifi';
+    html=`<div class="fg"><label>Sahə *</label><select id="f-qdept" onchange="updateQuoteProdList()">${deptOpts}</select></div>
+    <div class="fg"><label>Müştəri *</label><select id="f-qcustomer">${custOpts}</select></div>
+    <div class="fg"><label>Məhsullar</label>
+      <div class="q-items-wrap">
+        <table><thead><tr><th>Məhsul</th><th>Miqdar</th><th>Qiymət</th><th>Cəmi</th><th></th></tr></thead>
+        <tbody id="qi-body"></tbody></table>
+        <div class="q-total-row" id="qi-total">Cəmi: ₼0.00</div>
+        <div class="add-item-row">
+          <select id="qi-product" style="flex:2"></select>
+          <input id="qi-qty" type="number" value="1" min="1" placeholder="Miqdar" style="width:70px">
+          <input id="qi-price" type="number" placeholder="Qiymət" step="0.01" style="width:90px">
+          <button class="btn btn-sm btn-primary" onclick="addQuoteItem()">+ Əlavə</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="fg"><label>Status</label><select id="f-qstatus"><option>göndərildi</option><option>gözləyir</option><option>qəbul edildi</option><option>rədd edildi</option></select></div>
+      <div class="fg"><label>Tarix</label><input id="f-qdate" type="date" value="${today()}"></div>
+    </div>`;
+  } else if(type==='tasks'){
+    title='Yeni tapşırıq';
+    html=`<div class="fg"><label>Tapşırıq *</label><textarea id="f-text" placeholder="Tapşırığı yazın..."></textarea></div>
+    <div class="grid2">
+      <div class="fg"><label>Son tarix</label><input id="f-due" type="date" value="${today()}"></div>
+      <div class="fg"><label>Prioritet</label><select id="f-priority"><option>yüksək</option><option selected>orta</option><option>aşağı</option></select></div>
+    </div>
+    <div class="fg"><label>Sahə (istəyə görə)</label><select id="f-tdept"><option value="">— Ümumi —</option>${deptOpts}</select></div>`;
+  }
+
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=html;
+
+  // Set default dept
+  const deptEl=document.getElementById('f-dept')||document.getElementById('f-qdept');
+  if(deptEl&&defDept!=='all') deptEl.value=defDept;
+
+  if(type==='quotes') setTimeout(updateQuoteProdList,50);
+
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(()=>{ const f=document.querySelector('#modal-body input'); if(f)f.focus(); },100);
+}
+
+function updateQuoteProdList(){
+  const di=parseInt(document.getElementById('f-qdept')?.value||0);
+  const prods=getDeptProducts(di);
+  const sel=document.getElementById('qi-product');
+  if(!sel) return;
+  sel.innerHTML='<option value="">— Məhsul seç —</option>'+prods.map(p=>`<option value="${p['ID']}" data-price="${p['Qiymət']}">${p['Ad']} (${fmtM(p['Qiymət'])})</option>`).join('');
+  sel.onchange=function(){
+    const opt=this.options[this.selectedIndex];
+    const pr=document.getElementById('qi-price');
+    if(pr) pr.value=opt.getAttribute('data-price')||'';
+  };
+}
+
+function addQuoteItem(){
+  const sel=document.getElementById('qi-product');
+  const qty=parseFloat(document.getElementById('qi-qty')?.value)||1;
+  const price=parseFloat(document.getElementById('qi-price')?.value)||0;
+  if(!price) return;
+  const name=sel?.value?(sel.options[sel.selectedIndex].text.split(' (')[0]):'Xidmət/Digər';
+  quoteItems.push({name,qty,price,total:qty*price});
+  if(document.getElementById('qi-qty')) document.getElementById('qi-qty').value=1;
+  if(document.getElementById('qi-price')) document.getElementById('qi-price').value='';
+  if(sel) sel.value='';
+  renderQuoteItems();
+}
+function removeQuoteItem(i){ quoteItems.splice(i,1); renderQuoteItems(); }
+function renderQuoteItems(){
+  const tbody=document.getElementById('qi-body');
+  if(!tbody) return;
+  tbody.innerHTML=quoteItems.map((x,i)=>`<tr>
+    <td>${x.name}</td><td>${x.qty}</td><td>${fmtM(x.price)}</td><td>${fmtM(x.total)}</td>
+    <td><button class="btn btn-sm" onclick="removeQuoteItem(${i})" style="color:#e24b4a;padding:2px 7px">✕</button></td>
+  </tr>`).join('');
+  const total=quoteItems.reduce((s,x)=>s+x.total,0);
+  const el=document.getElementById('qi-total'); if(el) el.textContent='Cəmi: '+fmtM(total);
+}
+
+function closeModal(){ document.getElementById('modal-bg').classList.remove('open'); }
+function bgClick(e){ if(e.target===document.getElementById('modal-bg')) closeModal(); }
+
+async function saveModal(){
+  const btn=document.getElementById('modal-save-btn');
+  btn.disabled=true; btn.textContent='Saxlanılır...';
+  try{
+    const id=uid();
+
+    if(modalMode==='customers'){
+      const name=(document.getElementById('f-name')?.value||'').trim();
+      if(!name){alert('Ad Soyad mütləqdir!');return;}
+      const row={ID:id,'Ad Soyad':name,'Şirkət':document.getElementById('f-company')?.value||'',
+        'Telefon':document.getElementById('f-phone')?.value||'','Email':document.getElementById('f-email')?.value||'',
+        'Status':document.getElementById('f-status')?.value||'aktiv','Tarix':today()};
+      DB.customers.push(row);
+      try{ await apiPost(0,{action:'addCustomer',id,name,company:row['Şirkət'],phone:row['Telefon'],email:row['Email'],status:row['Status'],date:today()}); }catch(e){}
+
+    } else if(modalMode==='products'){
+      const di=parseInt(document.getElementById('f-dept')?.value||0);
+      const name=(document.getElementById('f-name')?.value||'').trim();
+      if(!name){alert('Ad mütləqdir!');return;}
+      const row={ID:id,'Ad':name,'Ölçü vahidi':document.getElementById('f-unit')?.value||'ədəd',
+        'Qiymət':parseFloat(document.getElementById('f-price')?.value)||0,'Stok':parseInt(document.getElementById('f-stock')?.value)||0};
+      DB.depts[di].products.push(row);
+      try{ await apiPost(di,{action:'addProduct',id,name,unit:row['Ölçü vahidi'],price:row['Qiymət'],stock:row['Stok']}); }catch(e){}
+
+    } else if(modalMode==='orders'){
+      const di=parseInt(document.getElementById('f-dept')?.value||0);
+      const custSel=document.getElementById('f-customer');
+      const custId=custSel?.value; const custName=custSel?.options[custSel.selectedIndex]?.text.split(' — ')[0]||'';
+      const total=parseFloat(document.getElementById('f-total')?.value)||0;
+      const row={ID:id,'Müştəri ID':custId,'Müştəri Adı':custName,
+        'Tarix':document.getElementById('f-date')?.value||today(),'Cəmi':total,
+        'Status':document.getElementById('f-ostatus')?.value||'yeni','Qeyd':document.getElementById('f-note')?.value||''};
+      DB.depts[di].orders.push(row);
+      try{ await apiPost(di,{action:'addOrder',id,customerId:custId,customerName:custName,date:row['Tarix'],total,status:row['Status'],notes:row['Qeyd']}); }catch(e){}
+
+    } else if(modalMode==='quotes'){
+      if(!quoteItems.length){alert('Ən azı bir məhsul əlavə edin!');return;}
+      const di=parseInt(document.getElementById('f-qdept')?.value||0);
+      const custSel=document.getElementById('f-qcustomer');
+      const custId=custSel?.value; const custName=custSel?.options[custSel.selectedIndex]?.text.split(' — ')[0]||'';
+      const total=quoteItems.reduce((s,x)=>s+x.total,0);
+      const status=document.getElementById('f-qstatus')?.value||'göndərildi';
+      const date=document.getElementById('f-qdate')?.value||today();
+      const itemsStr=JSON.stringify(quoteItems);
+      const row={ID:id,'Müştəri ID':custId,'Müştəri Adı':custName,'Tarix':date,'Cəmi':total,'Status':status,'Məhsullar':itemsStr,'_di':di};
+      DB.depts[di].quotes.push(row);
+      try{ await apiPost(di,{action:'addQuote',id,customerId:custId,customerName:custName,date,total,status,items:itemsStr}); }catch(e){}
+
+    } else if(modalMode==='tasks'){
+      const text=(document.getElementById('f-text')?.value||'').trim();
+      if(!text){alert('Tapşırıq mətni mütləqdir!');return;}
+      const deptVal=document.getElementById('f-tdept')?.value;
+      DB.tasks.push({id,text,due:document.getElementById('f-due')?.value||today(),
+        done:false,priority:document.getElementById('f-priority')?.value||'orta',
+        dept:deptVal!==''?parseInt(deptVal):undefined});
+    }
+
+    localSave(); closeModal(); renderPage(currentPage);
+  } finally { btn.disabled=false; btn.textContent='Saxla'; }
+}
+
+// ── Quote Print ───────────────────────────────────────────
+function printQuote(di,id){
+  const q=DB.depts[di].quotes.find(x=>String(x['ID'])===String(id)); if(!q) return;
+  let items=[]; try{ items=JSON.parse(q['Məhsullar']||'[]'); }catch(e){}
+  const total=items.reduce((s,x)=>s+x.total,0);
+  const dept=DEPTS[di];
+  document.getElementById('print-area').innerHTML=`
+  <div style="max-width:720px;margin:30px auto;font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;padding:44px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px">
+      <div>
+        <h1 style="font-size:24px;font-weight:900;color:#0f1120;margin-bottom:5px">${COMPANY.name}</h1>
+        <p style="font-size:13px;color:#8a94a6;line-height:1.8">${COMPANY.address}<br>${COMPANY.phone} · ${COMPANY.email}</p>
+        <div style="margin-top:10px"><span style="background:${dept.color}22;color:${dept.color};padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">${dept.emoji} ${dept.name}</span></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:${dept.color};letter-spacing:.5px">KOMMERSİYA TƏKLİFİ</div>
+        <div style="font-size:13px;color:#8a94a6;margin-top:6px">№ ${q['ID']}</div>
+        <div style="font-size:13px;color:#8a94a6">${fmtDate(q['Tarix'])}</div>
+      </div>
+    </div>
+    <div style="background:#f4f6fb;border-radius:10px;padding:16px 22px;margin-bottom:28px">
+      <div style="font-size:11px;color:#8a94a6;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">MÜŞTƏRİ</div>
+      <div style="font-size:17px;font-weight:800">${q['Müştəri Adı']}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:28px">
+      <thead><tr style="background:#0f1120;color:#fff">
+        <th style="text-align:left;padding:12px 16px;font-size:12px;font-weight:700">Məhsul / Xidmət</th>
+        <th style="text-align:center;padding:12px 16px;font-size:12px;font-weight:700">Miqdar</th>
+        <th style="text-align:right;padding:12px 16px;font-size:12px;font-weight:700">Vahid qiyməti</th>
+        <th style="text-align:right;padding:12px 16px;font-size:12px;font-weight:700">Cəmi</th>
+      </tr></thead>
+      <tbody>${items.map((x,i)=>`<tr style="background:${i%2?'#f8fafc':'#fff'}">
+        <td style="padding:11px 16px;font-size:13px;border-bottom:1px solid #f0f3f8">${x.name}</td>
+        <td style="padding:11px 16px;font-size:13px;text-align:center;border-bottom:1px solid #f0f3f8">${x.qty}</td>
+        <td style="padding:11px 16px;font-size:13px;text-align:right;border-bottom:1px solid #f0f3f8">${fmtM(x.price)}</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;text-align:right;border-bottom:1px solid #f0f3f8">${fmtM(x.total)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:36px">
+      <div style="background:#0f1120;color:#fff;border-radius:12px;padding:18px 28px;min-width:230px;text-align:right">
+        <div style="font-size:12px;opacity:.5;margin-bottom:5px;letter-spacing:.5px">ÜMUMI CƏMİ</div>
+        <div style="font-size:28px;font-weight:900">${fmtM(total)}</div>
+      </div>
+    </div>
+    <div style="border-top:2px solid #f0f3f8;padding-top:20px;font-size:12px;color:#8a94a6;text-align:center">
+      Bu kommersiya təklifi ${fmtDate(q['Tarix'])} tarixindən etibarən 30 gün müddətinə qüvvədədir.<br>
+      ${COMPANY.name} · ${COMPANY.phone} · ${COMPANY.email}
+    </div>
+  </div>`;
+  window.print();
+}
+
+function emailQuote(di,id){
+  const q=DB.depts[di].quotes.find(x=>String(x['ID'])===String(id)); if(!q) return;
+  const cust=DB.customers.find(c=>String(c['ID'])===String(q['Müştəri ID']));
+  const email=cust?.['Email']||'';
+  let items=[]; try{ items=JSON.parse(q['Məhsullar']||'[]'); }catch(e){}
+  const total=items.reduce((s,x)=>s+x.total,0);
+  const dept=DEPTS[di];
+  const lines=items.map(x=>`- ${x.name}: ${x.qty} x ${fmtM(x.price)} = ${fmtM(x.total)}`).join('%0A');
+  const subj=encodeURIComponent(`Kommersiya Təklifi #${q['ID']} — ${COMPANY.name} (${dept.name})`);
+  const body=encodeURIComponent(`Hörmətli ${q['Müştəri Adı']},\n\nSizin üçün hazırladığımız kommersiya təklifini təqdim edirik:\n\n`)+
+    lines+encodeURIComponent(`\n\nÜmumi cəm: ${fmtM(total)}\n\nHörmətlə,\n${COMPANY.name} — ${dept.name}\n${COMPANY.phone} · ${COMPANY.email}`);
+  window.open(`mailto:${email}?subject=${subj}&body=${body}`);
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+localLoad();
+renderConnStatus();
+renderDashboard();
+syncAll();
+</script>
+</body>
+</html>
